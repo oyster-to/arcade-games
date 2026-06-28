@@ -35,7 +35,7 @@ function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
 resize(); addEventListener('resize', resize);
 
 const scoreEl = document.getElementById('score'), timeEl = document.getElementById('time');
-let score = 0, time = 20, running = true, target = spawn();
+let score = 0, time = 20, running = true, best = null, target = spawn();
 
 function spawn() { const r = 28; return { x: r + Math.random() * (W - 2 * r), y: 70 + r + Math.random() * (H - 140 - 2 * r), r }; }
 function draw() {
@@ -56,9 +56,10 @@ cv.addEventListener('pointerdown', (e) => hit(e.clientX, e.clientY));
 const timer = setInterval(() => { time--; timeEl.textContent = time; if (time <= 0) end(); }, 1000);
 function end() {
   running = false; clearInterval(timer);
-  document.getElementById('final').textContent = 'SCORE ' + score;
+  const bestTxt = best ? '   BEST ' + best.score + ' ' + (best.initials || '') : '';
+  document.getElementById('final').textContent = 'SCORE ' + score + bestTxt;
   document.getElementById('over').classList.add('show');
-  post('arcade-score', { value: score });   // the cabinet owns the leaderboard
+  post('arcade-score', { value: score });   // cabinet records it on the shared leaderboard
 }
 document.getElementById('again').addEventListener('click', () => location.reload());
 addEventListener('keydown', (e) => { if (e.key === 'Escape') post('arcade-close'); });
@@ -67,6 +68,11 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape') post('arcade-close'
 function post(type, payload) {
   try { parent.postMessage({ protocol: 'oyster-arcade', v: 1, type, payload }, '*'); } catch (_) {}
 }
+// The cabinet replies to arcade-ready with the shared high score — show that
+// instead of keeping your own copy in localStorage (the cabinet owns the board).
+addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'arcade-init') best = (e.data.payload && e.data.payload.highScore) || null;
+});
 post('arcade-ready');
 </script>
 </body>

@@ -74,13 +74,28 @@ parent.postMessage(
 );
 ```
 
+**Showing the high score:** the cabinet *owns* the leaderboard — don't keep your
+own high score in `localStorage` (it's per-browser and never matches the shared
+board or your card). Announce you're ready and the cabinet sends you the current
+shared best:
+
+```js
+parent.postMessage({ protocol: 'oyster-arcade', v: 1, type: 'arcade-ready' }, '*');
+addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'arcade-init') {
+    const hi = e.data.payload && e.data.payload.highScore;   // { score, initials } | null
+    // ...display hi as the best...
+  }
+});
+```
+
 - Return to the cabinet on ESC:
 
 ```js
 parent.postMessage({ protocol: 'oyster-arcade', v: 1, type: 'arcade-close' }, '*');
 ```
 
-See `games/example-tap/index.html` for the pattern.
+See `games/example-tap/index.html` for the full pattern (score + initials + high score).
 
 ## Make it look great (strongly encouraged)
 
