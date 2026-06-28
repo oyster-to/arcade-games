@@ -88,6 +88,19 @@ addEventListener('keydown',e=>{
 });
 post('arcade-ready');
 
+// The cabinet owns the GLOBAL high score (shared leaderboard, fed by our
+// arcade-score posts). It sends the current best to the game on launch via
+// arcade-init (shipping soon). We display that when present; until then we fall
+// back to a local per-device best. arcade-score stays the source of truth.
+let arcadeBest=null, arcadeName='---';
+addEventListener('message',e=>{
+  const d=e&&e.data; if(!d||d.protocol!=='oyster-arcade'||d.type!=='arcade-init') return;
+  const p=d.payload||{}, h=(p.highScore&&typeof p.highScore==='object')?p.highScore:(p.best||p);
+  const v=(typeof h.value==='number')?h.value:(typeof h.score==='number')?h.score:(typeof p.highScore==='number'?p.highScore:null);
+  if(typeof v==='number'){ arcadeBest=v|0;
+    arcadeName=String(h.initials||h.name||p.initials||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,3).padEnd(3,'-')||'---'; }
+});
+
 // ---------- helpers ----------
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const dist=(a,b,c,d)=>Math.hypot(a-c,b-d);
@@ -105,8 +118,16 @@ function loadHi(){ try{ const d=JSON.parse(localStorage.getItem(HS_KEY)||'null')
   if(d&&typeof d.score==='number'){ hiscore=d.score|0; hiName=String(d.name||'AAA').toUpperCase().replace(/[^A-Z]/g,'').slice(0,3).padEnd(3,'A'); } }catch(_){} }
 function saveHi(){ try{ localStorage.setItem(HS_KEY,JSON.stringify({score:hiscore,name:hiName})); }catch(_){} }
 function cycleLetter(dir){ let c=entry[entryPos].charCodeAt(0)-65; c=(c+dir+26)%26; entry[entryPos]=String.fromCharCode(65+c); sfx.power(); }
-function confirmEntry(){ hiscore=score; hiName=entry.join(''); saveHi(); state='over'; sfx.wave();
-  post('arcade-score',{value:score,initials:hiName}); }
+function confirmEntry(){ const ini=entry.join('');
+  if(score>hiscore){ hiscore=score; hiName=ini; saveHi(); }   // update local/device best
+  state='over'; sfx.wave();
+  post('arcade-score',{value:score,initials:ini}); }          // arcade leaderboard gets every record-run
+// best lines for the menu / game-over screens: the arcade (global) best when the
+// cabinet has sent one, plus the local per-device best, clearly distinguished.
+function bestText(){ let s='';
+  if(arcadeBest!=null) s+='ARCADE BEST  '+String(arcadeBest).padStart(6,'0')+'   '+arcadeName+'\n';
+  if(hiscore>0) s+='YOUR BEST  '+String(hiscore).padStart(6,'0')+'   '+hiName+'   (this device)\n';
+  return s; }
 function entryClick(px,py){ if(!entryZones) return;
   for(let i=0;i<3;i++){ const z=entryZones.col[i];
     if(px>=z.x0&&px<=z.x1&&py>=z.y0&&py<=z.y1){ entryPos=i; cycleLetter(py<z.mid?+1:-1); return; } }
@@ -357,7 +378,7 @@ function update(){
   // game over only when nothing stands AND no builder is mid-rescue
   if(state==='play' && towers.every(t=>!t.alive) && builders.length===0){
     shake=16; sfx.over();
-    if(score>hiscore){ state='enter'; entry=['A','A','A']; entryPos=0; }
+    if(score>hiscore || (arcadeBest!=null && score>arcadeBest)){ state='enter'; entry=['A','A','A']; entryPos=0; }
     else { state='over'; post('arcade-score',{value:score,initials:hiName==='---'?'AAA':hiName}); }
   }
 }
@@ -543,9 +564,9 @@ function draw(){
   x.fillStyle='rgba(0,0,0,.10)'; for(let y=0;y<H;y+=3) x.fillRect(0,y,W,1);
 
   if(state==='menu') overlay('CARRIER DEFENSE',
-    'MOVE to aim · CLICK to fire interceptors. Blasts chain.\nMISSILES fall straight · CRUISE missiles streak in from the sides\nDRONES sway down and drop bomblets · CARRIER boss every 5th wave\nPower-ups: M = multi-shot · S = smart bomb · B = builder (rebuilds towers)\n'+(hiscore>0?'\nHIGH SCORE  '+String(hiscore).padStart(6,'0')+'   '+hiName+'\n':'\n')+'\nCLICK TO BEGIN','#7df9ff');
+    'MOVE to aim · CLICK to fire interceptors. Blasts chain.\nMISSILES fall straight · CRUISE missiles streak in from the sides\nDRONES sway down and drop bomblets · CARRIER boss every 5th wave\nPower-ups: M = multi-shot · S = smart bomb · B = builder (rebuilds towers)\n'+(bestText()?'\n'+bestText():'\n')+'\nCLICK TO BEGIN','#7df9ff');
   if(state==='over') overlay('SILENCE ON THE DIAL',
-    'All towers lost at WAVE '+wave+'.\nSCORE '+String(score).padStart(6,'0')+'\nBEST  '+String(hiscore).padStart(6,'0')+'   '+hiName+'\n\nCLICK TO TRY AGAIN','#ff5a8a');
+    'All towers lost at WAVE '+wave+'.\nSCORE '+String(score).padStart(6,'0')+'\n'+bestText()+'\nCLICK TO TRY AGAIN','#ff5a8a');
   if(state==='enter') drawEntry();
 }
 
@@ -554,7 +575,7 @@ function drawEntry(){
   x.textAlign='center';
   x.fillStyle='#ffd23f'; x.font='bold 40px "Courier New"'; x.fillText('NEW HIGH SCORE',W/2,H/2-150);
   x.fillStyle='#7df9ff'; x.font='22px "Courier New"'; x.fillText('SCORE '+String(score).padStart(6,'0'),W/2,H/2-112);
-  x.fillStyle='#bfeff2'; x.font='15px "Courier New"'; x.fillText('ENTER YOUR INITIALS',W/2,H/2-80);
+  x.fillStyle='#bfeff2'; x.font='15px "Courier New"'; x.fillText('ENTER INITIALS FOR THE LEADERBOARD',W/2,H/2-80);
   const cy=H/2+12, gap=90, x0=W/2-gap, blink=((performance.now()/400)|0)%2;
   const cols=[];
   for(let i=0;i<3;i++){
