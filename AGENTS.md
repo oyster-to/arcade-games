@@ -57,26 +57,47 @@ games/<game-id>/
 }
 ```
 
-## Behaving inside the cabinet (optional but nice)
+## Score & high score (strongly encouraged)
 
-Your game runs in an iframe inside the arcade. Two tiny messages make it feel at
-home (see `games/example-tap/index.html` for a working example):
+A real arcade game has a **score**, and the cabinet builds on it — it shows each
+game's high score on its card and runs a shared leaderboard. A game with no score
+feels dead next to the others, so give yours one:
+
+- Keep a running score and show it on screen.
+- When a round ends, report the final score to the cabinet (optionally with a
+  3-letter initials tag):
 
 ```js
-// report your score when a round ends — the cabinet owns the leaderboard
-parent.postMessage({ protocol:'oyster-arcade', v:1, type:'arcade-score', payload:{ value: score } }, '*');
-
-// return to the cabinet on ESC
-parent.postMessage({ protocol:'oyster-arcade', v:1, type:'arcade-close' }, '*');
+parent.postMessage(
+  { protocol: 'oyster-arcade', v: 1, type: 'arcade-score', payload: { value: score, initials: 'AAA' } },
+  '*',
+);
 ```
 
-## Adopt the cabinet look (strongly suggested, never required)
+- Return to the cabinet on ESC:
 
-The arcade has a shared CRT-cabinet style (pixel font, neon-on-dark, splash,
-touch controls). Adopting it makes your game look native **and** lets it inherit
-cabinet improvements automatically. It's **encouraged but optional** — a plain,
-good, self-contained HTML game is welcome exactly as-is. (The shared bundle +
-design guide are on the way; for now, just ship something fun and self-contained.)
+```js
+parent.postMessage({ protocol: 'oyster-arcade', v: 1, type: 'arcade-close' }, '*');
+```
+
+See `games/example-tap/index.html` for the pattern.
+
+## Make it look great (strongly encouraged)
+
+Arcade games live or die on *feel*. Don't ship programmer-art placeholders — push
+the visuals until your game looks like it belongs on a real arcade machine:
+
+- **Cabinet idiom** — crisp pixel art or clean vector, **neon-on-dark**, a
+  tasteful per-game palette, readable on a phone.
+- **Juice** — punchy motion, screen shake, particles, hit-flashes, sound on the
+  moments that matter. Small touches make it feel alive.
+- **A sharp cover** — the card art is the first thing players see.
+- **Iterate** — the first playable is a starting point, not the finish line.
+  Polish the graphics and game-feel before you call it done.
+
+(Adopting the shared cabinet chrome — pixel font, splash, touch controls — is
+coming as a drop-in bundle; for now, match the idiom yourself. A plain but
+*polished* self-contained game is always welcome.)
 
 ## Validate, then PR
 
