@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "carrier-defense",
+  "name": "CARRIER DEFENSE",
+  "author": "Henry",
+  "tagline": "Down the missiles, cruise strikes and drone swarms before your towers fall",
+  "cover": "cover.svg",
+  "controls": ["mouse", "tap"],
+  "orientation": "landscape",
+  "description": "A neon missile-command defender. Aim with the mouse, click or tap to fire interceptors. Hold the line against falling missiles, sideways cruise strikes, and drones that drop bomblets. Every fifth wave an enemy carrier rolls in. Grab [M] multishot and [S] smart-bomb power-ups, keep at least one tower standing, and chase a high score."
+}
