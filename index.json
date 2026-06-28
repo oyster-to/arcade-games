@@ -1,0 +1,15 @@
+[
+  {
+    "id": "carrier-defense",
+    "name": "CARRIER DEFENSE",
+    "author": "Henblox80",
+    "url": "https://oyster-to.github.io/arcade-games/games/carrier-defense/",
+    "cover": "https://oyster-to.github.io/arcade-games/games/carrier-defense/cover.svg",
+    "tagline": "Down the missiles, cruise strikes and drone swarms before your towers fall",
+    "controls": [
+      "mouse",
+      "tap"
+    ],
+    "orientation": "landscape"
+  }
+]
