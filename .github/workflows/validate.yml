@@ -1,0 +1,21 @@
+name: validate
+on:
+  pull_request:
+    paths:
+      - 'games/**'
+      - 'validate.mjs'
+
+# Read-only token, and `pull_request` (never pull_request_target) — contributed
+# game code is data, never executed with repo secrets.
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node validate.mjs --all

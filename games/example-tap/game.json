@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "example-tap",
+  "name": "TAP TARGET",
+  "author": "Oyster",
+  "tagline": "Tap the targets before the timer runs out",
+  "cover": "cover.svg",
+  "controls": ["tap"],
+  "orientation": "any"
+}
